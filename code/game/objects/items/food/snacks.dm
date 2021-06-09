@@ -175,6 +175,7 @@
 	icon_state = "peanuts"
 	trash_type = /obj/item/trash/peanuts
 	food_reagents = list(/datum/reagent/consumable/nutriment = 2)
+	junkiness = 25
 	tastes = list("peanuts" = 3)
 	foodtypes = JUNKFOOD | NUTS
 	w_class = WEIGHT_CLASS_SMALL
@@ -228,7 +229,8 @@
 	desc = "Legally, we cannot say that these won't melt in your hands."
 	icon_state = "cnds"
 	trash_type = /obj/item/trash/cnds
-	food_reagents = list(/datum/reagent/consumable/nutriment = 2, /datum/reagent/consumable/coco = 1)
+	food_reagents = list(/datum/reagent/consumable/sugar = 3, /datum/reagent/consumable/coco = 1)
+	junkiness = 25
 	tastes = list("chocolate candy" = 3)
 	foodtypes = JUNKFOOD
 	w_class = WEIGHT_CLASS_SMALL
@@ -241,26 +243,26 @@
 /obj/item/food/cnds/caramel
 	name = "caramel C&Ds"
 	desc = "Stuffed with sugary sweet caramel, making them a diabetic's worst nightmare."
-	food_reagents = list(/datum/reagent/consumable/nutriment = 2, /datum/reagent/consumable/coco = 1, /datum/reagent/consumable/caramel = 1)
+	food_reagents = list(/datum/reagent/consumable/sugar = 4, /datum/reagent/consumable/coco = 1, /datum/reagent/consumable/caramel = 1)
 	tastes = list("chocolate candy" = 2, "caramel" = 1)
 
 /obj/item/food/cnds/pretzel
 	name = "pretzel C&Ds"
 	desc = "Eine köstliche Begleitung zu Ihrem Lieblingsbier."
-	food_reagents = list(/datum/reagent/consumable/nutriment = 3, /datum/reagent/consumable/coco = 1)
+	food_reagents = list(/datum/reagent/consumable/nutriment = 1, /datum/reagent/consumable/sugar = 2, /datum/reagent/consumable/coco = 1)
 	tastes = list("chocolate candy" = 2, "pretzel" = 1)
 	foodtypes = JUNKFOOD | GRAIN
 
 /obj/item/food/cnds/peanut_butter
 	name = "peanut butter C&Ds"
 	desc = "Beloved by small children and aliens alike."
-	food_reagents = list(/datum/reagent/consumable/nutriment = 2, /datum/reagent/consumable/coco = 1, /datum/reagent/consumable/peanut_butter = 1)
+	food_reagents = list(/datum/reagent/consumable/nutriment = 1,  /datum/reagent/consumable/sugar = 2, /datum/reagent/consumable/coco = 1, /datum/reagent/consumable/peanut_butter = 1)
 	tastes = list("chocolate candy" = 2, "peanut butter" = 1)
 
 /obj/item/food/cnds/banana_honk
 	name = "banana honk C&Ds"
 	desc = "The official candy of clowns everywhere. Honk honk!"
-	food_reagents = list(/datum/reagent/consumable/nutriment = 2, /datum/reagent/consumable/coco = 1, /datum/reagent/consumable/banana = 1)
+	food_reagents = list(/datum/reagent/consumable/sugar = 3, /datum/reagent/consumable/coco = 1, /datum/reagent/consumable/banana = 1)
 	tastes = list("chocolate candy" = 2, "banana" = 1)
 
 /obj/item/food/cnds/random
