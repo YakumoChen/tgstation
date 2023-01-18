@@ -32,7 +32,7 @@
 
 /obj/item/organ/internal/lungs/carp/Initialize(mapload)
 	. = ..()
-	AddElement(/datum/element/noticable_organ, "has odd neck gills.", BODY_ZONE_HEAD)
+	AddElement(/datum/element/noticable_organ, "neck has odd gills.", BODY_ZONE_HEAD)
 	AddElement(/datum/element/organ_set_bonus, /datum/status_effect/organ_set_bonus/carp)
 
 ///occasionally sheds carp teeth, stronger melee (bite) attacks, but you can't cover your mouth anymore.
@@ -46,6 +46,10 @@
 	icon_state = "tongue"
 	greyscale_config = /datum/greyscale_config/mutant_organ
 	greyscale_colors = CARP_COLORS
+
+/obj/item/organ/internal/tongue/carp/Initialize(mapload)
+	. = ..()
+	AddElement(/datum/element/organ_set_bonus, /datum/status_effect/organ_set_bonus/carp)
 
 /obj/item/organ/internal/tongue/carp/Insert(mob/living/carbon/tongue_owner, special, drop_if_replaced)
 	. = ..()
@@ -102,13 +106,16 @@
 
 /obj/item/organ/internal/brain/carp/Initialize(mapload)
 	. = ..()
-	AddElement(/datum/element/noticable_organ, "seems unable to stay still.")
 	AddElement(/datum/element/organ_set_bonus, /datum/status_effect/organ_set_bonus/carp)
+
+/obj/item/organ/internal/brain/carp/Insert(mob/living/carbon/reciever, special, drop_if_replaced, no_id_transfer)
+	AddElement(/datum/element/noticable_organ, "seem[reciever.p_s()] unable to stay still.")
+	return ..()
 
 /obj/item/organ/internal/brain/carp/Insert(mob/living/carbon/brain_owner, special, drop_if_replaced, no_id_transfer)
 	. = ..()
-	cooldown_timer = addtimer(CALLBACK(src, PROC_REF(unsatisfied_nomad)), cooldown_time, TIMER_STOPPABLE|TIMER_OVERRIDE)
-	RegisterSignal(brain_owner, COMSIG_MOVABLE_Z_CHANGED, .proc/satisfied_nomad)
+	cooldown_timer = addtimer(CALLBACK(src, PROC_REF(unsatisfied_nomad)), cooldown_time, TIMER_STOPPABLE|TIMER_OVERRIDE|TIMER_UNIQUE)
+	RegisterSignal(brain_owner, COMSIG_MOVABLE_Z_CHANGED, PROC_REF(satisfied_nomad))
 
 //technically you could get around the mood issue by extracting and reimplanting the brain but it will be far easier to just go one z there and back
 /obj/item/organ/internal/brain/carp/Remove(mob/living/carbon/brain_owner, special, no_id_transfer)
@@ -125,7 +132,7 @@
 /obj/item/organ/internal/brain/carp/proc/satisfied_nomad()
 	SIGNAL_HANDLER
 	owner.clear_mood_event("nomad")
-	cooldown_timer = addtimer(CALLBACK(src, PROC_REF(unsatisfied_nomad)), cooldown_time, TIMER_STOPPABLE|TIMER_OVERRIDE)
+	cooldown_timer = addtimer(CALLBACK(src, PROC_REF(unsatisfied_nomad)), cooldown_time, TIMER_STOPPABLE|TIMER_OVERRIDE|TIMER_UNIQUE)
 
 /// makes you cold resistant, but heat-weak.
 /obj/item/organ/internal/heart/carp
@@ -141,8 +148,11 @@
 
 /obj/item/organ/internal/heart/carp/Initialize(mapload)
 	. = ..()
-	AddElement(/datum/element/noticable_organ, "skin has small patches of scales growing...")
 	AddElement(/datum/element/organ_set_bonus, /datum/status_effect/organ_set_bonus/carp)
+
+/obj/item/organ/internal/heart/carp/Insert(mob/living/carbon/reciever, special = FALSE, drop_if_replaced = TRUE)
+	AddElement(/datum/element/noticable_organ, "[reciever.p_have()] small patches of scales growing on [reciever.p_their()] skin...")
+	return ..()
 
 #undef CARP_ORGAN_COLOR
 #undef CARP_SCLERA_COLOR

@@ -62,7 +62,7 @@
 		if(obj_flags & EMAGGED)
 			balloon_alert(user, "the interface is broken!")
 			return
-		panel_open = !panel_open
+		toggle_panel_open()
 		balloon_alert(user, "wires are [panel_open ? "exposed" : "unexposed"]")
 		update_appearance()
 		return
@@ -111,7 +111,7 @@
 	balloon_alert(user, "welding the APC frame")
 	if(!welder.use_tool(src, user, 50, volume=50, amount=3))
 		return
-	if((machine_stat & BROKEN) || opened==APC_COVER_REMOVED)
+	if((machine_stat & BROKEN) || opened == APC_COVER_REMOVED)
 		new /obj/item/stack/sheet/iron(loc)
 		user.visible_message(span_notice("[user.name] cuts [src] apart with [welder]."))
 		balloon_alert(user, "disassembled the broken frame")
@@ -217,7 +217,7 @@
 	else
 		if(allowed(usr) && !wires.is_cut(WIRE_IDSCAN) && !malfhack && !remote_control_user)
 			locked = !locked
-			balloon_alert(user, "APC [ locked ? "locked" : "unlocked"]")
+			balloon_alert(user, locked ? "locked" : "unlocked")
 			update_appearance()
 			if(!locked)
 				ui_interact(user)
