@@ -460,11 +460,11 @@ Delayed insert mode was removed in mysql 7 and only works with MyISAM type table
 	ASSERT(fexists(daemon), "Configured db_daemon doesn't exist")
 
 	var/list/result = world.shelleo("echo \"Starting ezdb daemon, do not close this window\" && [daemon]")
-	var/error_code = result[1]
-	if (!error_code)
+	var/result_code = result[1]
+	if (!result_code || result_code == 1)
 		return
 
-	stack_trace("Failed to start DB daemon: [error_code]\n[result[3]]")
+	stack_trace("Failed to start DB daemon: [result_code]\n[result[3]]")
 
 /datum/controller/subsystem/dbcore/proc/stop_db_daemon()
 	set waitfor = FALSE
@@ -569,12 +569,18 @@ Delayed insert mode was removed in mysql 7 and only works with MyISAM type table
 	. = (status != DB_QUERY_BROKEN)
 	var/timed_out = !. && findtext(last_error, "Operation timed out")
 	if(!. && log_error)
-		log_sql("[last_error] | Query used: [sql] | Arguments: [json_encode(arguments)]")
+		logger.Log(LOG_CATEGORY_DEBUG_SQL, "sql query failed", list(
+			"query" = sql,
+			"arguments" = json_encode(arguments),
+			"error" = last_error,
+		))
+
 	if(!async && timed_out)
-		log_query_debug("Query execution started at [start_time]")
-		log_query_debug("Query execution ended at [REALTIMEOFDAY]")
-		log_query_debug("Slow query timeout detected.")
-		log_query_debug("Query used: [sql]")
+		logger.Log(LOG_CATEGORY_DEBUG_SQL, "slow query timeout", list(
+			"query" = sql,
+			"start_time" = start_time,
+			"end_time" = REALTIMEOFDAY,
+		))
 		slow_query_check()
 
 /// Sleeps until execution of the query has finished.
