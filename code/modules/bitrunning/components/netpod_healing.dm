@@ -13,7 +13,7 @@
 
 	START_PROCESSING(SSmachines, src)
 
-/datum/component/netpod_healing/Destroy(force, silent)
+/datum/component/netpod_healing/Destroy(force)
 	STOP_PROCESSING(SSmachines, src)
 
 	var/mob/living/carbon/player = parent
@@ -31,7 +31,6 @@
 	need_mob_update += owner.adjustBruteLoss(-BASE_HEAL * seconds_per_tick, updating_health = FALSE)
 	need_mob_update += owner.adjustFireLoss(-BASE_HEAL * seconds_per_tick, updating_health = FALSE)
 	need_mob_update += owner.adjustToxLoss(-BASE_HEAL * seconds_per_tick, updating_health = FALSE, forced = TRUE)
-	need_mob_update += owner.adjustCloneLoss(-BASE_HEAL * seconds_per_tick, updating_health = FALSE)
 
 	if(owner.blood_volume < BLOOD_VOLUME_NORMAL)
 		owner.blood_volume += BASE_HEAL * seconds_per_tick
