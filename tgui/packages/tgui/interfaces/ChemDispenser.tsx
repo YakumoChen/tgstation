@@ -1,4 +1,3 @@
-import { toFixed } from 'common/math';
 import { BooleanLike } from 'common/react';
 import { toTitleCase } from 'common/string';
 import { useState } from 'react';
@@ -22,16 +21,22 @@ type DispensableReagent = {
   pHCol: string;
 };
 
+type TransferableBeaker = Beaker & {
+  transferAmounts: number[];
+};
+
 type Data = {
   showpH: BooleanLike;
   amount: number;
   energy: number;
   maxEnergy: number;
+  displayedEnergy: string;
+  displayedMaxEnergy: string;
   chemicals: DispensableReagent[];
   recipes: string[];
   recordingRecipe: string[];
   recipeReagents: string[];
-  beaker: Beaker;
+  beaker: TransferableBeaker;
 };
 
 export const ChemDispenser = (props) => {
@@ -87,7 +92,7 @@ export const ChemDispenser = (props) => {
           <LabeledList>
             <LabeledList.Item label="Energy">
               <ProgressBar value={data.energy / data.maxEnergy}>
-                {toFixed(data.energy) + ' units'}
+                {data.displayedEnergy + ' / ' + data.displayedMaxEnergy}
               </ProgressBar>
             </LabeledList.Item>
           </LabeledList>
