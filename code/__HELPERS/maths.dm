@@ -2,8 +2,8 @@
 /proc/get_angle(atom/movable/start, atom/movable/end)//For beams.
 	if(!start || !end)
 		return 0
-	var/dy =(32 * end.y + end.pixel_y) - (32 * start.y + start.pixel_y)
-	var/dx =(32 * end.x + end.pixel_x) - (32 * start.x + start.pixel_x)
+	var/dy =(ICON_SIZE_Y * end.y + end.pixel_y) - (ICON_SIZE_Y * start.y + start.pixel_y)
+	var/dx =(ICON_SIZE_X * end.x + end.pixel_x) - (ICON_SIZE_X * start.x + start.pixel_x)
 	return delta_to_angle(dx, dy)
 
 /// Calculate the angle produced by a pair of x and y deltas
@@ -18,8 +18,8 @@
 
 /// Angle between two arbitrary points and horizontal line same as [/proc/get_angle]
 /proc/get_angle_raw(start_x, start_y, start_pixel_x, start_pixel_y, end_x, end_y, end_pixel_x, end_pixel_y)
-	var/dy = (32 * end_y + end_pixel_y) - (32 * start_y + start_pixel_y)
-	var/dx = (32 * end_x + end_pixel_x) - (32 * start_x + start_pixel_x)
+	var/dy = (ICON_SIZE_Y * end_y + end_pixel_y) - (ICON_SIZE_Y * start_y + start_pixel_y)
+	var/dx = (ICON_SIZE_X * end_x + end_pixel_x) - (ICON_SIZE_X * start_x + start_pixel_x)
 	if(!dy)
 		return (dx >= 0) ? 90 : 270
 	. = arctan(dx/dy)
@@ -60,7 +60,7 @@
 	var/y_distance_sign = SIGN(y_distance)
 
 	var/x = abs_x_distance >> 1 //Counters for steps taken, setting to distance/2
-	var/y = abs_y_distance >> 1 //Bit-shifting makes me l33t.  It also makes get_line() unnessecarrily fast.
+	var/y = abs_y_distance >> 1 //Bit-shifting makes me l33t.  It also makes get_line() unnecessarily fast.
 
 	if(abs_x_distance >= abs_y_distance) //x distance is greater than y
 		for(var/distance_counter in 0 to (abs_x_distance - 1))//It'll take abs_x_distance steps to get there
@@ -86,7 +86,7 @@
 
 /**
  * Get a list of turfs in a perimeter given the `center_atom` and `radius`.
- * Automatically rounds down decimals and does not accept values less than positive 1 as they dont play well with it.
+ * Automatically rounds down decimals and does not accept values less than positive 1 as they don't play well with it.
  * Is efficient on large circles but ugly on small ones
  * Uses [Jesko`s method to the midpoint circle Algorithm](https://en.wikipedia.org/wiki/Midpoint_circle_algorithm).
  */
@@ -159,23 +159,41 @@
  * Args:
  * - power: The value of power to format.
  * - convert: Whether to convert this from joules.
+ * - datum/controller/subsystem/scheduler: used in the conversion
  * Returns: The string containing the formatted power.
  */
-/proc/display_power(power, convert = TRUE)
-	power = convert ? energy_to_power(power) : power
+/proc/display_power(power, convert = TRUE, datum/controller/subsystem/scheduler = SSmachines)
+	power = convert ? energy_to_power(power, scheduler) : power
 	return siunit(power, "W", 3)
 
-///Format an energy value in prefixed joules.
+/**
+ * Format an energy value in prefixed joules.
+ * Arguments
+ *
+ * * units - the value t convert
+ */
 /proc/display_energy(units)
 	return siunit(units, "J", 3)
 
-///Converts the joule to the watt, assuming SSmachines tick rate.
-/proc/energy_to_power(joules)
-	return joules * (1 SECONDS) / SSmachines.wait
+/**
+ * Converts the joule to the watt, assuming SSmachines tick rate.
+ * Arguments
+ *
+ * * joules - the value in joules to convert
+ * * datum/controller/subsystem/scheduler - the subsystem whos wait time is used in the conversion
+ */
+/proc/energy_to_power(joules, datum/controller/subsystem/scheduler = SSmachines)
+	return joules * (1 SECONDS) / scheduler.wait
 
-///Converts the watt to the joule, assuming SSmachines tick rate.
-/proc/power_to_energy(watts)
-	return watts * SSmachines.wait / (1 SECONDS)
+/**
+ * Converts the watt to the joule, assuming SSmachines tick rate.
+ * * Arguments
+ *
+ * * joules - the value in joules to convert
+ * * datum/controller/subsystem/scheduler - the subsystem whos wait time is used in the conversion
+ */
+/proc/power_to_energy(watts, datum/controller/subsystem/scheduler = SSmachines)
+	return watts * scheduler.wait / (1 SECONDS)
 
 ///chances are 1:value. anyprob(1) will always return true
 /proc/anyprob(value)
@@ -223,3 +241,7 @@
 /// Useful for providing an additive modifier to a value that is used as a divisor, such as `/obj/projectile/var/speed`
 /proc/reciprocal_add(x, y)
 	return 1/((1/x)+y)
+
+/// 180s an angle
+/proc/reverse_angle(angle)
+	return (angle + 180) % 360

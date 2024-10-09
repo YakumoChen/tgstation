@@ -133,7 +133,7 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/computer/auxiliary_base, 32)
 		return FALSE
 	return TRUE
 
-/obj/machinery/computer/auxiliary_base/ui_act(action, params)
+/obj/machinery/computer/auxiliary_base/ui_act(action, list/params, datum/tgui/ui, datum/ui_state/state)
 	. = ..()
 	if(.)
 		return
@@ -273,7 +273,7 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/computer/auxiliary_base, 32)
 
 	to_chat(user, span_notice("You begin setting the landing zone parameters..."))
 	setting = TRUE
-	if(!do_after(user, 50, target = user)) //You get a few seconds to cancel if you do not want to drop there.
+	if(!do_after(user, 5 SECONDS, target = user)) //You get a few seconds to cancel if you do not want to drop there.
 		setting = FALSE
 		return
 	setting = FALSE
@@ -355,7 +355,7 @@ MAPPING_DIRECTIONAL_HELPERS(/obj/machinery/computer/auxiliary_base, 32)
 		return
 
 	anti_spam_cd = 1
-	addtimer(CALLBACK(src, PROC_REF(clear_cooldown)), 50)
+	addtimer(CALLBACK(src, PROC_REF(clear_cooldown)), 5 SECONDS)
 
 	var/turf/landing_spot = get_turf(src)
 

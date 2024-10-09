@@ -28,6 +28,7 @@
 	. = ..()
 	if(.)
 		return
+	var/mob/user = ui.user
 
 	var/datum/record/crew/target
 	if(params["crew_ref"])
@@ -41,7 +42,7 @@
 				return FALSE
 
 			var/value = trim(params["value"], MAX_BROADCAST_LEN)
-			investigate_log("[key_name(usr)] changed the field: \"[field]\" with value: \"[target.vars[field]]\" to new value: \"[value || "Unknown"]\"", INVESTIGATE_RECORDS)
+			investigate_log("[key_name(user)] changed the field: \"[field]\" with value: \"[target.vars[field]]\" to new value: \"[value || "Unknown"]\"", INVESTIGATE_RECORDS)
 			target.vars[field] = value || "Unknown"
 
 			return TRUE
@@ -51,24 +52,24 @@
 				return FALSE
 			// Don't let people off station futz with the station network.
 			if(!is_station_level(z))
-				balloon_alert(usr, "out of range!")
+				balloon_alert(user, "out of range!")
 				return TRUE
 
 			expunge_record_info(target)
-			balloon_alert(usr, "record expunged")
-			playsound(src, 'sound/machines/terminal_eject.ogg', 70, TRUE)
-			investigate_log("[key_name(usr)] expunged the record of [target.name].", INVESTIGATE_RECORDS)
+			balloon_alert(user, "record expunged")
+			playsound(src, 'sound/machines/terminal/terminal_eject.ogg', 70, TRUE)
+			investigate_log("[key_name(user)] expunged the record of [target.name].", INVESTIGATE_RECORDS)
 
 			return TRUE
 
 		if("login")
-			authenticated = secure_login(usr)
-			investigate_log("[key_name(usr)] [authenticated ? "successfully logged" : "failed to log"] into the [src].", INVESTIGATE_RECORDS)
+			authenticated = secure_login(user)
+			investigate_log("[key_name(user)] [authenticated ? "successfully logged" : "failed to log"] into the [src].", INVESTIGATE_RECORDS)
 			return TRUE
 
 		if("logout")
-			balloon_alert(usr, "logged out")
-			playsound(src, 'sound/machines/terminal_off.ogg', 70, TRUE)
+			balloon_alert(user, "logged out")
+			playsound(src, 'sound/machines/terminal/terminal_off.ogg', 70, TRUE)
 			authenticated = FALSE
 
 			return TRUE
@@ -76,22 +77,22 @@
 		if("purge_records")
 			// Don't let people off station futz with the station network.
 			if(!is_station_level(z))
-				balloon_alert(usr, "out of range!")
+				balloon_alert(user, "out of range!")
 				return TRUE
 
 			ui.close()
-			balloon_alert(usr, "purging records...")
-			playsound(src, 'sound/machines/terminal_alert.ogg', 70, TRUE)
+			balloon_alert(user, "purging records...")
+			playsound(src, 'sound/machines/terminal/terminal_alert.ogg', 70, TRUE)
 
-			if(do_after(usr, 5 SECONDS))
+			if(do_after(user, 5 SECONDS))
 				for(var/datum/record/crew/entry in GLOB.manifest.general)
 					expunge_record_info(entry)
 
-				balloon_alert(usr, "records purged")
-				playsound(src, 'sound/machines/terminal_off.ogg', 70, TRUE)
-				investigate_log("[key_name(usr)] purged all records.", INVESTIGATE_RECORDS)
+				balloon_alert(user, "records purged")
+				playsound(src, 'sound/machines/terminal/terminal_off.ogg', 70, TRUE)
+				investigate_log("[key_name(user)] purged all records.", INVESTIGATE_RECORDS)
 			else
-				balloon_alert(usr, "interrupted!")
+				balloon_alert(user, "interrupted!")
 
 			return TRUE
 
@@ -99,8 +100,7 @@
 			if(!target)
 				return FALSE
 
-			playsound(src, "sound/machines/terminal_button0[rand(1, 8)].ogg", 50, TRUE)
-			update_preview(usr, params["assigned_view"], target)
+			update_preview(user, params["assigned_view"], target)
 			return TRUE
 
 	return FALSE
@@ -139,23 +139,23 @@
 
 	if(!authenticated && !allowed(user))
 		balloon_alert(user, "access denied")
-		playsound(src, 'sound/machines/terminal_error.ogg', 70, TRUE)
+		playsound(src, 'sound/machines/terminal/terminal_error.ogg', 70, TRUE)
 		return FALSE
 
-	if(mugshot.picture.psize_x > world.icon_size || mugshot.picture.psize_y > world.icon_size)
+	if(mugshot.picture.psize_x > ICON_SIZE_X || mugshot.picture.psize_y > ICON_SIZE_Y)
 		balloon_alert(user, "photo too large!")
-		playsound(src, 'sound/machines/terminal_error.ogg', 70, TRUE)
+		playsound(src, 'sound/machines/terminal/terminal_error.ogg', 70, TRUE)
 		return FALSE
 
 	var/trimmed = copytext(mugshot.name, 9, MAX_NAME_LEN) // Remove "photo - "
-	var/name = tgui_input_text(user, "Enter the name of the new record.", "New Record", trimmed, MAX_NAME_LEN)
+	var/name = tgui_input_text(user, "Enter the name of the new record.", "New Record", trimmed, max_length = MAX_NAME_LEN)
 	if(!name || !is_operational || !user.can_perform_action(src, ALLOW_SILICON_REACH) || !mugshot || QDELETED(mugshot) || QDELETED(src))
 		return FALSE
 
 	new /datum/record/crew(name = name, character_appearance = mugshot.picture.picture_image)
 
 	balloon_alert(user, "record created")
-	playsound(src, 'sound/machines/terminal_insert_disc.ogg', 70, TRUE)
+	playsound(src, 'sound/machines/terminal/terminal_insert_disc.ogg', 70, TRUE)
 
 	qdel(mugshot)
 
@@ -168,10 +168,10 @@
 
 	if(!allowed(user))
 		balloon_alert(user, "access denied")
-		playsound(src, 'sound/machines/terminal_error.ogg', 70, TRUE)
+		playsound(src, 'sound/machines/terminal/terminal_error.ogg', 70, TRUE)
 		return FALSE
 
 	balloon_alert(user, "logged in")
-	playsound(src, 'sound/machines/terminal_on.ogg', 70, TRUE)
+	playsound(src, 'sound/machines/terminal/terminal_on.ogg', 70, TRUE)
 
 	return TRUE

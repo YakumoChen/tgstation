@@ -20,7 +20,6 @@
 	icon_gib = "carp_gib"
 	gold_core_spawnable = HOSTILE_SPAWN
 	mob_biotypes = MOB_ORGANIC | MOB_BEAST
-	movement_type = FLYING
 	health = 25
 	maxHealth = 25
 	pressure_resistance = 200
@@ -28,7 +27,7 @@
 	obj_damage = 50
 	melee_damage_lower = 20
 	melee_damage_upper = 20
-	attack_sound = 'sound/weapons/bite.ogg'
+	attack_sound = 'sound/items/weapons/bite.ogg'
 	attack_vis_effect = ATTACK_EFFECT_BITE
 	attack_verb_continuous = "bites"
 	attack_verb_simple = "bite"
@@ -41,10 +40,12 @@
 	butcher_results = list(/obj/item/food/fishmeat/carp = 2, /obj/item/stack/sheet/animalhide/carp = 1)
 	greyscale_config = /datum/greyscale_config/carp
 	ai_controller = /datum/ai_controller/basic_controller/carp
-	habitable_atmos = list("min_oxy" = 0, "max_oxy" = 0, "min_plas" = 0, "max_plas" = 0, "min_co2" = 0, "max_co2" = 0, "min_n2" = 0, "max_n2" = 0)
+	habitable_atmos = null
 	minimum_survivable_temperature = 0
 	maximum_survivable_temperature = 1500
 
+	/// If true we will run away from attackers even at full health
+	var/cowardly = FALSE
 	/// Cytology cells you can swab from this creature
 	var/cell_line = CELL_LINE_TABLE_CARP
 	/// What colour is our 'healing' outline?
@@ -89,11 +90,13 @@
 	if (cell_line)
 		AddElement(/datum/element/swabable, cell_line, CELL_VIRUS_TABLE_GENERIC_MOB, 1, 5)
 	AddElement(/datum/element/simple_flying)
-	AddElement(/datum/element/ai_flee_while_injured)
+	if (!cowardly)
+		AddElement(/datum/element/ai_flee_while_injured)
 	setup_eating()
 
 	AddComponent(/datum/component/aggro_emote, emote_list = string_list(list("gnashes")))
 	AddComponent(/datum/component/regenerator, outline_colour = regenerate_colour)
+	AddComponent(/datum/component/profound_fisher)
 	if (tamer)
 		tamed(tamer, feedback = FALSE)
 		befriend(tamer)
@@ -134,6 +137,8 @@
 
 /// Gives the carp a list of weakrefs of destinations to try and travel between when it has nothing better to do
 /mob/living/basic/carp/proc/migrate_to(list/datum/weakref/migration_points)
+	ai_controller.can_idle = FALSE
+	ai_controller.set_ai_status(AI_STATUS_ON) // We need htem to actually walk to the station
 	var/list/actual_points = list()
 	for(var/datum/weakref/point_ref as anything in migration_points)
 		var/turf/point_resolved = point_ref.resolve()
@@ -266,8 +271,8 @@
 
 ///Wild carp that just vibe ya know
 /mob/living/basic/carp/passive
-	name = "passive carp"
-	desc = "A timid, sucker-bearing creature that resembles a fish. "
+	name = "false carp"
+	desc = "A close relative of the space carp which is entirely toothless and feeds by stealing its cousin's leftovers."
 
 	icon_state = "base_friend"
 	icon_living = "base_friend"
@@ -277,11 +282,19 @@
 	attack_verb_continuous = "suckers"
 	attack_verb_simple = "suck"
 
-	melee_damage_lower = 4
-	melee_damage_upper = 4
+	melee_damage_lower = 0
+	melee_damage_upper = 0
+	cowardly = TRUE
 	ai_controller = /datum/ai_controller/basic_controller/carp/passive
+	gold_core_spawnable = FRIENDLY_SPAWN
 
 /mob/living/basic/carp/passive/Initialize(mapload)
 	. = ..()
-	AddElement(/datum/element/ai_retaliate)
+	AddComponent(/datum/component/ai_retaliate_advanced, CALLBACK(src, PROC_REF(on_attacked)))
 	AddElement(/datum/element/pet_bonus, "bloops happily!")
+	ADD_TRAIT(src, TRAIT_PACIFISM, INNATE_TRAIT)
+
+/// If someone slaps one of the school, scatter
+/mob/living/basic/carp/passive/proc/on_attacked(mob/living/attacker)
+	for(var/mob/living/basic/carp/passive/schoolmate in oview(src, 9))
+		schoolmate.ai_controller?.insert_blackboard_key_lazylist(BB_BASIC_MOB_RETALIATE_LIST, attacker)

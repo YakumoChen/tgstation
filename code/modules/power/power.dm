@@ -30,7 +30,7 @@
 
 /obj/machinery/power/Destroy()
 	disconnect_from_network()
-	addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(update_cable_icons_on_turf), get_turf(src)), 3)
+	addtimer(CALLBACK(GLOBAL_PROC, GLOBAL_PROC_REF(update_cable_icons_on_turf), get_turf(src)), 0.3 SECONDS)
 	return ..()
 
 ///////////////////////////////
@@ -50,31 +50,27 @@
 	. = ..()
 	if(can_change_cable_layer)
 		if(!QDELETED(powernet))
-			. += span_notice("It's operating on the [lowertext(GLOB.cable_layer_to_name["[cable_layer]"])].")
+			. += span_notice("It's operating on the [LOWER_TEXT(GLOB.cable_layer_to_name["[cable_layer]"])].")
 		else
-			. += span_warning("It's disconnected from the [lowertext(GLOB.cable_layer_to_name["[cable_layer]"])].")
-		. += span_notice("It's power line can be changed with a [EXAMINE_HINT("multitool")].")
-
-///does the required checks to see if this machinery layer can be changed
-/obj/machinery/power/proc/cable_layer_change_checks(mob/living/user, obj/item/tool)
-	return can_change_cable_layer
+			. += span_warning("It's disconnected from the [LOWER_TEXT(GLOB.cable_layer_to_name["[cable_layer]"])].")
+		. += span_notice("Its power line can be changed with a [EXAMINE_HINT("multitool")].")
 
 /obj/machinery/power/multitool_act(mob/living/user, obj/item/tool)
-	. = ITEM_INTERACT_BLOCKING
+	if(can_change_cable_layer)
+		return cable_layer_act(user, tool)
 
-	if(!can_change_cable_layer || !cable_layer_change_checks(user, tool))
-		return
+/obj/machinery/power/multitool_act_secondary(mob/living/user, obj/item/tool)
+	return multitool_act(user, tool)
 
+/// Called on multitool_act when we can change cable layers, override to add more conditions
+/obj/machinery/power/proc/cable_layer_act(mob/living/user, obj/item/tool)
 	var/choice = tgui_input_list(user, "Select Power Line For Operation", "Select Cable Layer", GLOB.cable_name_to_layer)
-	if(isnull(choice))
-		return
+	if(isnull(choice) || QDELETED(src) || QDELETED(user) || QDELETED(tool) || !user.Adjacent(src) || !user.is_holding(tool))
+		return ITEM_INTERACT_BLOCKING
 
 	cable_layer = GLOB.cable_name_to_layer[choice]
 	balloon_alert(user, "now operating on the [choice]")
 	return ITEM_INTERACT_SUCCESS
-
-/obj/machinery/power/multitool_act_secondary(mob/living/user, obj/item/tool)
-	return multitool_act(user, tool)
 
 /obj/machinery/power/proc/add_avail(amount)
 	if(powernet)
@@ -121,8 +117,6 @@
 // returns true if the area has power on given channel (or doesn't require power).
 // defaults to power_channel
 /obj/machinery/proc/powered(chan = power_channel, ignore_use_power = FALSE)
-	if(!loc)
-		return FALSE
 	if(!use_power && !ignore_use_power)
 		return TRUE
 
@@ -173,14 +167,14 @@
 		return amount //Shuttles get free power, don't ask why
 
 	var/obj/machinery/power/apc/local_apc = home.apc
-	if(isnull(local_apc))
+	if(isnull(local_apc) || !local_apc.operating)
 		return FALSE
 
 	// Surplus from the grid.
 	var/surplus = local_apc.surplus()
 	var/grid_used = min(surplus, amount)
 	var/apc_used = 0
-	if((amount > grid_used) && !ignore_apc) // Use from the APC's cell if there isn't enough energy from the grid.
+	if((amount > grid_used) && !ignore_apc && !QDELETED(local_apc.cell)) // Use from the APC's cell if there isn't enough energy from the grid.
 		apc_used = local_apc.cell.use(amount - grid_used, force = force)
 
 	if(!force && (amount < grid_used + apc_used)) // If we aren't forcing it and there isn't enough energy to supply demand, return nothing.
@@ -208,7 +202,7 @@
 		return amount
 
 	var/obj/machinery/power/apc/my_apc = my_area.apc
-	if(isnull(my_apc))
+	if(isnull(my_apc) || !my_apc.operating || QDELETED(my_apc.cell))
 		return FALSE
 	return my_apc.cell.use(amount, force = force)
 
@@ -234,8 +228,9 @@
 		return amount //Shuttles get free power, don't ask why
 
 	var/obj/machinery/power/apc/local_apc = home.apc
-	if(!local_apc)
+	if(isnull(local_apc) || !local_apc.operating)
 		return FALSE
+
 	var/surplus = local_apc.surplus()
 	if(surplus <= 0) //I don't know if powernet surplus can ever end up negative, but I'm just gonna failsafe it
 		return FALSE
@@ -255,7 +250,7 @@
  * - channel: The power channel to use.
  * Returns: The amount of energy the cell received.
  */
-/obj/machinery/proc/charge_cell(amount, obj/item/stock_parts/cell/cell, grid_only = FALSE, channel = AREA_USAGE_EQUIP)
+/obj/machinery/proc/charge_cell(amount, obj/item/stock_parts/power_store/cell, grid_only = FALSE, channel = AREA_USAGE_EQUIP)
 	var/demand = use_energy(min(amount, cell.used_charge()), channel = channel, ignore_apc = grid_only)
 	var/power_given = cell.give(demand)
 	return power_given
@@ -455,11 +450,11 @@
 		power_source = Cable.powernet
 
 	var/datum/powernet/PN
-	var/obj/item/stock_parts/cell/cell
+	var/obj/item/stock_parts/power_store/cell
 
 	if (istype(power_source, /datum/powernet))
 		PN = power_source
-	else if (istype(power_source, /obj/item/stock_parts/cell))
+	else if (istype(power_source, /obj/item/stock_parts/power_store))
 		cell = power_source
 	else if (istype(power_source, /obj/machinery/power/apc))
 		var/obj/machinery/power/apc/apc = power_source
@@ -498,7 +493,7 @@
 		return FALSE
 
 	var/datum/powernet/PN = powernet_info["powernet"]
-	var/obj/item/stock_parts/cell/cell = powernet_info["cell"]
+	var/obj/item/stock_parts/power_store/cell = powernet_info["cell"]
 
 	var/PN_damage = 0
 	var/cell_damage = 0
@@ -523,7 +518,7 @@
 		source_area.apc?.terminal?.use_energy(drained_energy)
 	else if (istype(power_source, /datum/powernet))
 		PN.delayedload += (min(drained_energy, max(PN.newavail - PN.delayedload, 0)))
-	else if (istype(power_source, /obj/item/stock_parts/cell))
+	else if (istype(power_source, /obj/item/stock_parts/power_store))
 		cell.use(drained_energy)
 	return drained_energy
 

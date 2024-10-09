@@ -34,11 +34,13 @@
 	. = ..()
 	set_wires(new /datum/wires/tesla_coil(src))
 
-/obj/machinery/power/energy_accumulator/tesla_coil/cable_layer_change_checks(mob/living/user, obj/item/tool)
+/obj/machinery/power/energy_accumulator/tesla_coil/cable_layer_act(mob/living/user, obj/item/tool)
+	if(panel_open)
+		return NONE
 	if(anchored)
 		balloon_alert(user, "unanchor first!")
-		return FALSE
-	return TRUE
+		return ITEM_INTERACT_BLOCKING
+	return ..()
 
 /obj/machinery/power/energy_accumulator/tesla_coil/RefreshParts()
 	. = ..()
@@ -112,7 +114,7 @@
 	var/power = (powernet.avail) * 0.2 * input_power_multiplier  //Always always always use more then you output for the love of god
 	power = min(surplus(), power) //Take the smaller of the two
 	add_load(power)
-	playsound(src.loc, 'sound/magic/lightningshock.ogg', zap_sound_volume, TRUE, zap_sound_range)
+	playsound(src.loc, 'sound/effects/magic/lightningshock.ogg', zap_sound_volume, TRUE, zap_sound_range)
 	tesla_zap(source = src, zap_range = 10, power = power, cutoff = 1e3, zap_flags = zap_flags)
 	zap_buckle_check(power)
 
@@ -124,6 +126,8 @@
 	anchored = FALSE
 	density = TRUE
 	wants_powernet = FALSE
+
+	circuit = /obj/item/circuitboard/machine/grounding_rod
 
 	can_buckle = TRUE
 	buckle_lying = 0
